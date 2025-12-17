@@ -1,29 +1,40 @@
 {
   "expo": {
-    "name": "scanova",
-    "slug": "scanova",
+    "name": "Qio",
+    "slug": "qio",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#050511"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mdazad.qio"
     },
     "android": {
+      "package": "com.mdazad.qio",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#050511"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+        [
+            "expo-camera",
+            {
+                "cameraPermission": "Allow Scanova to access your camera to scan QR codes."
+            }
+        ]
+    ]
   }
 }

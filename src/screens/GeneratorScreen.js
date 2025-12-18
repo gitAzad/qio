@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, Keyboard, TouchableWithoutFeedback, ScrollView, Platform, TouchableOpacity, TextInput, Modal, Image } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,8 +22,8 @@ const PRESET_COLORS = [
 
 export const GeneratorScreen = () => {
   const { theme, isDark } = useTheme();
-  const [value, setValue] = useState('https://scanova.app');
-  const [qrRef, setQrRef] = useState(null);
+  const [value, setValue] = useState('https://qio.mdazad.com');
+  const qrRef = useRef(null);
   
   // Customization State
   const [logo, setLogo] = useState(null);
@@ -54,13 +54,13 @@ export const GeneratorScreen = () => {
   };
 
   const handleShare = async () => {
-    if (!qrRef) {
+    if (!qrRef.current) {
       console.log('QR ref not available');
       return;
     }
 
     try {
-      qrRef.toDataURL(async (data) => {
+      qrRef.current.toDataURL(async (data) => {
         try {
           const base64Data = data.startsWith('data:') ? data.split(',')[1] : data;
           const filename = `qr-code-${Date.now()}.png`;
@@ -68,7 +68,7 @@ export const GeneratorScreen = () => {
           
           // Write the file using writeAsStringAsync (more reliable on Android)
           await FileSystem.writeAsStringAsync(tempPath, base64Data, {
-            encoding: FileSystem.EncodingType.Base64,
+            encoding: 'base64',
           });
           
           // Verify file exists
@@ -121,14 +121,14 @@ export const GeneratorScreen = () => {
                 <View className="bg-white p-4 rounded-xl items-center justify-center w-full h-full overflow-hidden">
                     <QRCode
                         value={value || ' '}
-                        size={180}
+                        size={260}
                         color={color}
                         backgroundColor="white"
                         logo={logo ? { uri: logo } : undefined}
-                        logoSize={40}
+                        logoSize={50}
                         logoBackgroundColor="white"
                         logoMargin={2}
-                        getRef={(c) => setQrRef(c)}
+                        getRef={(c) => (qrRef.current = c)}
                     />
                 </View>
             </View>
@@ -175,15 +175,16 @@ export const GeneratorScreen = () => {
               )}
           </View>
           
-          <TouchableOpacity onPress={handleShare}>
+          <TouchableOpacity onPress={handleShare} activeOpacity={0.8} className="shadow-lg">
             <LinearGradient
-                colors={['#00E5FF', '#0047FF']}
+                colors={['#00E5FF', '#00B8CC']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                className="h-14 rounded-full flex-row items-center justify-center gap-2"
+                className="h-14 rounded-2xl flex-row items-center justify-center gap-3 shadow-xl"
+                style={{ shadowColor: '#00E5FF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 }}
             >
-                <Share2 color="white" size={20} />
-                <Text className="text-white font-bold text-lg">Save & Share</Text>
+                <Share2 color="white" size={22} strokeWidth={2.5} />
+                <Text className="text-white font-[Inter_700Bold] text-lg">Share QR Code</Text>
             </LinearGradient>
           </TouchableOpacity>
           

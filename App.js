@@ -6,9 +6,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/theme';
 import { useFonts, Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import * as Linking from 'expo-linking';
+import { useEffect, useRef } from 'react';
 
 const AppContent = () => {
   const { theme, isDark } = useTheme();
+  const navigationRef = useRef();
 
   const navigationTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
@@ -21,11 +24,43 @@ const AppContent = () => {
     },
   };
 
+  // Handle deep links
+  useEffect(() => {
+    const handleDeepLink = ({ url }) => {
+      if (!url || !navigationRef.current) return;
+
+      const { hostname, path, queryParams } = Linking.parse(url);
+      
+      // Handle different deep link routes
+      if (path === 'scan' || hostname === 'scan') {
+        navigationRef.current.navigate('Main', { screen: 'Scanner' });
+      } else if (path === 'create' || hostname === 'create') {
+        navigationRef.current.navigate('Main', { screen: 'Create' });
+      } else if (path === 'history' || hostname === 'history') {
+        navigationRef.current.navigate('Main', { screen: 'History' });
+      } else if (path === 'settings' || hostname === 'settings') {
+        navigationRef.current.navigate('Main', { screen: 'Settings' });
+      }
+    };
+
+    // Handle initial URL (app opened from link)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    // Handle URL when app is already open
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    return () => subscription.remove();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <StatusBar style={isDark ? "light" : "dark"} />
-        <NavigationContainer theme={navigationTheme}>
+        <NavigationContainer ref={navigationRef} theme={navigationTheme}>
           <AppNavigator />
         </NavigationContainer>
       </View>

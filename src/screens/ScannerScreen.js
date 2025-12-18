@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Linking, Platform, StyleSheet, Share, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Linking, Platform, StyleSheet, Share, Animated, Modal, PanResponder } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Scan, X, Copy, ExternalLink, Share2, Save, Zap, ZapOff, Image as ImageIcon } from 'lucide-react-native';
+import { Scan, X, Copy, ExternalLink, Share2, Save, Zap, ZapOff, Image as ImageIcon, FileText } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 
 import { useTheme } from '../theme';
 import { GlassView } from '../components/GlassView';
+
+import { addToHistory } from '../utils/storage';
 
 export const ScannerScreen = () => {
   const { theme } = useTheme();
@@ -20,6 +23,77 @@ export const ScannerScreen = () => {
   
   // Animation for scan line
   const translateY = useRef(new Animated.Value(0)).current;
+
+  const handleSave = async () => {
+    const saved = await addToHistory({
+      type: scanResult.startsWith('http') ? 'link' : 'text',
+      title: scanResult.startsWith('http') ? 'Website Detected' : 'Text Detected',
+      subtitle: scanResult,
+      data: scanResult,
+      // Icon is handled by HistoryScreen based on type
+    });
+    
+    if (saved) {
+      alert('Saved to history!');
+      resetScan();
+    }
+  };
+
+  const resetScan = () => {
+    setScanned(false);
+    setScanResult('');
+    // Re-trigger animation
+    translateY.setValue(0);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateY, {
+          toValue: 280,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaType.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        // Note: Actual scanning from image requires a dedicated decoder library
+        // For now, we simulate a scan or just show the result modal if we had a decoder
+        // Since we can't scan locally without extra deps, we'll alert
+        alert("Scanning from gallery requires an additional library (expo-barcode-scanner). Feature coming soon!");
+      }
+    } catch (error) {
+      console.log('Error picking image:', error);
+    }
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy > 5;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100) { // Swipe down threshold
+          resetScan();
+        }
+      },
+    })
+  ).current;
 
   // ... (rest of animation logic is same)
 
@@ -92,26 +166,9 @@ export const ScannerScreen = () => {
     }
   };
 
-  const resetScan = () => {
-    setScanned(false);
-    setScanResult('');
-    // Re-trigger animation
-    translateY.setValue(0);
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(translateY, {
-          toValue: 280,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  };
+
+
+
 
   return (
     <View className="flex-1 bg-black">
@@ -181,7 +238,10 @@ export const ScannerScreen = () => {
             </Text>
 
             <View className="absolute bottom-5 left-8">
-                 <TouchableOpacity className="w-12 h-12 bg-[#1E1E1E] rounded-xl items-center justify-center border border-white/10">
+                 <TouchableOpacity 
+                    onPress={pickImage}
+                    className="w-12 h-12 bg-[#1E1E1E] rounded-xl items-center justify-center border border-white/10"
+                 >
                      <ImageIcon color="white" size={24} />
                  </TouchableOpacity>
                  <Text className="text-white/60 text-xs text-center mt-1">Gallery</Text>
@@ -190,9 +250,17 @@ export const ScannerScreen = () => {
       </View>
 
       {/* Result Bottom Sheet Modal */}
-      {scanned && (
-        <View className="absolute inset-0 z-20 justify-end bg-black/50">
-          <View className="bg-[#1E1E1E] rounded-t-3xl p-6 pb-24 shadow-2xl border-t border-gray-800">
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={scanned}
+        onRequestClose={resetScan}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View 
+            {...panResponder.panHandlers}
+            className="bg-[#1E1E1E] rounded-t-3xl p-6 pb-24 shadow-2xl border-t border-gray-800"
+          >
              {/* Drag Handle */}
              <View className="self-center w-12 h-1.5 bg-gray-600 rounded-full mb-6" />
 
@@ -226,20 +294,37 @@ export const ScannerScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <View className="flex-row justify-between px-4">
-                 <TouchableOpacity className="items-center" onPress={() => {}}>
-                    <Text className="text-gray-400 font-[Inter_600SemiBold]">Save</Text>
+            <View className="flex-row justify-between px-2 mt-2">
+                 <TouchableOpacity 
+                    className="items-center justify-center bg-gray-800/50 w-20 h-20 rounded-2xl border border-gray-700"
+                    onPress={handleSave}
+                 >
+                    <Save color="#9CA3AF" size={24} className="mb-1" />
+                    <Text className="text-gray-400 font-[Inter_500Medium] text-xs">Save</Text>
                  </TouchableOpacity>
-                 <TouchableOpacity className="items-center" onPress={copyToClipboard}>
-                    <Text className="text-gray-400 font-[Inter_600SemiBold]">Copy</Text>
+
+                 <TouchableOpacity 
+                    className="items-center justify-center bg-gray-800/50 w-20 h-20 rounded-2xl border border-gray-700"
+                    onPress={() => {
+                        copyToClipboard();
+                        resetScan();
+                    }}
+                 >
+                    <Copy color="#9CA3AF" size={24} className="mb-1" />
+                    <Text className="text-gray-400 font-[Inter_500Medium] text-xs">Copy</Text>
                  </TouchableOpacity>
-                 <TouchableOpacity className="items-center" onPress={resetScan}>
-                    <Text className="text-white font-[Inter_600SemiBold]">Close</Text>
+
+                 <TouchableOpacity 
+                    className="items-center justify-center bg-gray-800/50 w-20 h-20 rounded-2xl border border-gray-700"
+                    onPress={resetScan}
+                 >
+                    <X color="#EF4444" size={24} className="mb-1" />
+                    <Text className="text-red-500 font-[Inter_500Medium] text-xs">Close</Text>
                  </TouchableOpacity>
             </View>
           </View>
         </View>
-      )}
+      </Modal>
     </View>
   );
 };

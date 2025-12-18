@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { X, QrCode, Zap, Shield, Heart } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -88,26 +88,25 @@ export const AboutScreen = ({ navigation }) => {
         {/* Credits */}
         <View className="rounded-2xl p-6 mb-6" style={{ backgroundColor: theme.colors.surface }}>
           <Text className="text-lg font-[Inter_600SemiBold] mb-3" style={{ color: theme.colors.text }}>Made with</Text>
-          <View className="flex-row items-center mb-3">
+          <View className="flex-row items-center">
             <Heart color="#FF0055" size={20} fill="#FF0055" />
-            <Text className="text-base font-[Inter_400Regular] ml-2" style={{ color: theme.colors.textSecondary }}>
-              by MD Azad
-            </Text>
+            <TouchableOpacity onPress={() => Linking.openURL('https://mdazad.com')} className="ml-2">
+              <Text className="text-base font-[Inter_500Medium]" style={{ color: theme.colors.primary }}>
+                MD Azad
+              </Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => {/* Open mdazad.com */}}>
-            <Text className="text-base font-[Inter_500Medium]" style={{ color: theme.colors.primary }}>
-              mdazad.com
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* Copyright */}
-        <Text className="text-sm text-center font-[Inter_400Regular]" style={{ color: theme.colors.textSecondary }}>
-          © 2025 MD Azad. All rights reserved.
+        <Text className="text-sm text-center font-[Inter_400Regular] mb-2" style={{ color: theme.colors.textSecondary }}>
+          © 2025 Qio. All rights reserved.
         </Text>
-        <Text className="text-xs text-center font-[Inter_400Regular] mt-1" style={{ color: theme.colors.textSecondary }}>
-          mdazad.com
-        </Text>
+        <TouchableOpacity onPress={() => Linking.openURL('https://mdazad.com')} className="items-center">
+          <Text className="text-xs text-center font-[Inter_400Regular]" style={{ color: theme.colors.primary }}>
+            mdazad.com
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

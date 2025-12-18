@@ -27,6 +27,26 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "qio.mdazad.com",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "qio"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "web": {
@@ -44,6 +64,7 @@
       "eas": {
         "projectId": "27c37962-d83c-4fcb-a58c-88a7bb152d79"
       }
-    }
+    },
+    "scheme": "qio"
   }
 }

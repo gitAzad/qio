@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.mdazad.qio",
+      "sha256_cert_fingerprints": [
+        "43:93:6F:0C:6E:9B:60:57:AB:2A:73:E4:A5:D7:4E:ED:6F:29:6C:5F:2D:45:47:DD:6F:2F:62:5C:6D:C8:07:CA:3"
+      ]
+    }
+  }
+]

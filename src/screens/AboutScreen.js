@@ -88,17 +88,25 @@ export const AboutScreen = ({ navigation }) => {
         {/* Credits */}
         <View className="rounded-2xl p-6 mb-6" style={{ backgroundColor: theme.colors.surface }}>
           <Text className="text-lg font-[Inter_600SemiBold] mb-3" style={{ color: theme.colors.text }}>Made with</Text>
-          <View className="flex-row items-center">
+          <View className="flex-row items-center mb-3">
             <Heart color="#FF0055" size={20} fill="#FF0055" />
             <Text className="text-base font-[Inter_400Regular] ml-2" style={{ color: theme.colors.textSecondary }}>
-              by the Qio Team
+              by MD Azad
             </Text>
           </View>
+          <TouchableOpacity onPress={() => {/* Open mdazad.com */}}>
+            <Text className="text-base font-[Inter_500Medium]" style={{ color: theme.colors.primary }}>
+              mdazad.com
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Copyright */}
         <Text className="text-sm text-center font-[Inter_400Regular]" style={{ color: theme.colors.textSecondary }}>
-          © 2025 Qio. All rights reserved.
+          © 2025 MD Azad. All rights reserved.
+        </Text>
+        <Text className="text-xs text-center font-[Inter_400Regular] mt-1" style={{ color: theme.colors.textSecondary }}>
+          mdazad.com
         </Text>
       </ScrollView>
     </View>

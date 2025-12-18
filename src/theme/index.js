@@ -39,23 +39,23 @@ const commonTheme = {
 };
 
 const lightColors = {
-  background: '#f0f0f5',
-  surface: '#ffffff',
-  primary: '#00afba', // Darker Cyan for contrast
+  background: '#F5F5F5',
+  surface: '#FFFFFF',
+  primary: '#00B8CC', // Darker Cyan for better contrast
   secondary: '#8a00bf', // Darker Purple
   accent: '#ff0055',
-  text: '#12122a',
-  textSecondary: '#666680',
-  border: '#dcdce0',
+  text: '#000000',
+  textSecondary: '#666666',
+  border: '#E0E0E0',
   success: '#00cc7d',
   error: '#ff3366',
-  overlay: 'rgba(255,255,255,0.8)',
+  overlay: 'rgba(0,0,0,0.1)',
 };
 
 const darkColors = {
-  background: '#050511', // Deep Space Blue/Black
-  surface: '#12122a',
-  primary: '#00f2ff', // Cyan
+  background: '#121212', // Dark background matching current design
+  surface: '#1E1E1E',
+  primary: '#00E5FF', // Cyan
   secondary: '#bd00ff', // Electric Purple
   accent: '#ff0055', // Neon Red/Pink
   text: '#ffffff',
@@ -73,19 +73,13 @@ const ThemeContext = createContext({
 
 export const ThemeProvider = ({ children }) => {
   const systemColorScheme = useColorScheme();
-  const [colorScheme, setColorScheme] = React.useState(null);
-
-  useEffect(() => {
-     if (!colorScheme) {
-         setColorScheme(systemColorScheme);
-     }
-  }, [systemColorScheme]);
+  const [isDarkMode, setIsDarkMode] = React.useState(true); // Default to dark mode
 
   const toggleTheme = () => {
-    setColorScheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+    setIsDarkMode(prev => !prev);
   };
 
-  const isDark = (colorScheme || systemColorScheme) === 'dark';
+  const isDark = isDarkMode;
 
   const theme = useMemo(() => {
     const colors = isDark ? darkColors : lightColors;
@@ -116,4 +110,19 @@ export const ThemeProvider = ({ children }) => {
 export const useTheme = () => useContext(ThemeContext);
 
 // Backwards compatibility for now, but should be replaced
-export const theme = { ...commonTheme, colors: darkColors };
+export const theme = { 
+  ...commonTheme, 
+  colors: {
+    background: '#121212',
+    surface: '#1E1E1E',
+    primary: '#00E5FF',
+    secondary: '#bd00ff',
+    accent: '#ff0055',
+    text: '#ffffff',
+    textSecondary: '#a0a0b0',
+    border: '#2a2a4a',
+    success: '#00ff9d',
+    error: '#ff3366',
+    overlay: 'rgba(0,0,0,0.7)',
+  }
+};

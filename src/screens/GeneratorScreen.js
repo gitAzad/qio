@@ -1,113 +1,73 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Text, Keyboard, TouchableWithoutFeedback, ScrollView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Keyboard, TouchableWithoutFeedback, ScrollView, Platform, TouchableOpacity, TextInput, Modal, Image } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Share2 } from 'lucide-react-native';
+import { Share2, Search, PlusCircle, Palette, X, ImageIcon, Check } from 'lucide-react-native';
 
 import { useTheme } from '../theme';
-import { GlassView } from '../components/GlassView';
-import { GradientButton } from '../components/GradientButton';
-import { StyledInput } from '../components/StyledInput';
-import { ThemeToggle } from '../components/ThemeToggle';
+
+const PRESET_COLORS = [
+  '#000000', // Black
+  '#00E5FF', // Cyan
+  '#FF0055', // Red/Pink
+  '#2962FF', // Blue
+  '#00C853', // Green
+  '#FFD600', // Yellow
+  '#6200EA', // Purple
+  '#FF6D00', // Orange
+];
 
 export const GeneratorScreen = () => {
   const { theme, isDark } = useTheme();
   const [value, setValue] = useState('https://scanova.app');
   const [qrRef, setQrRef] = useState(null);
+  
+  // Customization State
+  const [logo, setLogo] = useState(null);
+  const [color, setColor] = useState('#000000');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [customColorsEnabled, setCustomColorsEnabled] = useState(false);
 
-  const styles = useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-      paddingTop: 60,
-    },
-    themeToggle: {
-      position: 'absolute',
-      top: 50,
-      right: 20,
-      zIndex: 10,
-    },
-    scrollContent: {
-      paddingHorizontal: theme.spacing.l,
-      paddingBottom: 40,
-    },
-    header: {
-      ...theme.typography.header,
-      color: theme.colors.text,
-      textAlign: 'center',
-      marginBottom: theme.spacing.xs,
-    },
-    subtext: {
-      ...theme.typography.caption,
-      textAlign: 'center',
-      marginBottom: theme.spacing.xl,
-      fontSize: 16,
-    },
-    previewContainer: {
-      alignItems: 'center',
-      marginBottom: theme.spacing.xl,
-    },
-    qrCard: {
-      borderRadius: theme.borderRadius.l,
-      padding: theme.spacing.xl,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    qrWrapper: {
-      backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)', 
-      padding: theme.spacing.l, 
-      borderRadius: theme.borderRadius.m 
-    },
-    inputContainer: {
-      borderRadius: theme.borderRadius.l,
-      padding: theme.spacing.l,
-    },
-    actions: {
-      marginTop: theme.spacing.m,
-    },
-    actionButton: {
-      flex: 1,
+  // Logo Picker
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+      base64: true, 
+    });
+
+    if (!result.canceled) {
+      setLogo(result.assets[0].uri);
     }
-  }), [theme, isDark]);
+  };
+
+  const toggleCustomColors = () => {
+      setCustomColorsEnabled(!customColorsEnabled);
+      if (customColorsEnabled) {
+          setColor('#000000'); 
+      }
+  };
 
   const handleShare = () => {
     if (qrRef) {
       qrRef.toDataURL(async (data) => {
-        if (Platform.OS === 'web') {
-          try {
-            // Check if data is already a data URI or just base64
+        try {
             const base64Data = data.startsWith('data:') ? data.split(',')[1] : data;
-            
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], {type: 'image/png'});
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'qr-code.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-          } catch (e) {
-            console.error("Web share error:", e);
-          }
-        } else {
-          try {
             const tempPath = FileSystem.cacheDirectory + 'qr-code.png';
-            await FileSystem.writeAsStringAsync(tempPath, data, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
+            
+            // Use the new File API for Expo SDK 54
+            const file = new FileSystem.File(tempPath);
+            await file.create();
+            await file.write(base64Data, { encoding: FileSystem.EncodingType.Base64 });
+            
             await Sharing.shareAsync(tempPath);
-          } catch (error) {
+        } catch (error) {
             console.error("Error sharing QR code:", error);
-          }
         }
       });
     }
@@ -115,51 +75,100 @@ export const GeneratorScreen = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <LinearGradient 
-        colors={[theme.colors.background, isDark ? '#0a0a1a' : '#dcdce0']} 
-        style={styles.container}
-      >
-        <ThemeToggle style={styles.themeToggle} />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.header}>Generator</Text>
-          <Text style={styles.subtext}>Create your unique QR Code</Text>
+      <View className="flex-1" style={{ backgroundColor: theme.colors.background }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 120 }}>
+          
+          <Text className="text-xl font-[Inter_700Bold] text-center mb-6" style={{ color: theme.colors.text }}>Create QR Code</Text>
+          
+          <Text className="text-sm mb-2 font-[Inter_500Medium]" style={{ color: theme.colors.textSecondary }}>Input</Text>
+          <View className="bg-white rounded-xl flex-row items-center px-4 h-12 mb-2">
+              <TextInput 
+                  value={value}
+                  onChangeText={setValue}
+                  placeholder="Enter URL or Text"
+                  placeholderTextColor="#999"
+                  className="flex-1 text-black font-[Inter_400Regular]"
+                  autoCapitalize="none"
+              />
+              <Search color="#999" size={20} />
+          </View>
+          <Text className="text-xs mb-6" style={{ color: theme.colors.textSecondary }}>Content Type: Text / URL</Text>
 
-          <View style={styles.previewContainer}>
-            <GlassView style={styles.qrCard}>
-              <View style={styles.qrWrapper}>
-                <QRCode
-                  value={value || ' '}
-                  size={200}
-                  color="black"
-                  backgroundColor="white"
-                  getRef={(c) => setQrRef(c)}
-                />
-              </View>
-            </GlassView>
+          {/* Preview Area */}
+          <View className="items-center mb-8">
+            <View className="p-8 rounded-3xl w-full items-center justify-center aspect-square shadow-lg" style={{ backgroundColor: theme.colors.surface }}>
+                <View className="bg-white p-4 rounded-xl items-center justify-center w-full h-full overflow-hidden">
+                    <QRCode
+                        value={value || ' '}
+                        size={180}
+                        color={color}
+                        backgroundColor="white"
+                        logo={logo ? { uri: logo } : undefined}
+                        logoSize={40}
+                        logoBackgroundColor="white"
+                        logoMargin={2}
+                        getRef={(c) => setQrRef(c)}
+                    />
+                </View>
+            </View>
           </View>
 
-          <GlassView style={styles.inputContainer}>
-            <StyledInput
-              label="Content"
-              placeholder="Enter URL or Text"
-              value={value}
-              onChangeText={setValue}
-              multiline
-            />
-            
-            <View style={styles.actions}>
-              <GradientButton 
-                title="Share QR" 
-                icon={Share2}
-                onPress={handleShare}
-                style={styles.actionButton}
-              />
-            </View>
-          </GlassView>
+          {/* Add Logo Option */}
+          <View className="flex-row justify-between items-center mb-4">
+                  <Text className="font-[Inter_500Medium]" style={{ color: theme.colors.text }}>Add Logo</Text>
+                  <TouchableOpacity onPress={pickImage} className="flex-row items-center gap-2">
+                     <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>{logo ? 'Change' : 'Upload'}</Text>
+                     {logo ? (
+                         <Image source={{ uri: logo }} style={{ width: 24, height: 24, borderRadius: 12 }} />
+                     ) : (
+                         <PlusCircle color="#00E5FF" size={20} />
+                     )}
+                  </TouchableOpacity>
+              </View>
+
+          {/* Custom Colors Option */}
+          <View className="flex-col mb-8">
+              <View className="flex-row justify-between items-center mb-2">
+                  <Text className="font-[Inter_500Medium]" style={{ color: theme.colors.text }}>Custom Colors</Text>
+                  <TouchableOpacity onPress={toggleCustomColors}>
+                    <View className={`w-12 h-7 rounded-full justify-center px-1 ${customColorsEnabled ? 'bg-primary' : 'bg-gray-700'}`}>
+                        <View className={`w-5 h-5 bg-white rounded-full ${customColorsEnabled ? 'self-end' : 'self-start'}`} />
+                    </View>
+                  </TouchableOpacity>
+              </View>
+              
+              {/* Color Palette */}
+              {customColorsEnabled && (
+                  <View className="flex-row flex-wrap gap-3 mt-2 justify-center">
+                      {PRESET_COLORS.map((c) => (
+                          <TouchableOpacity 
+                            key={c} 
+                            onPress={() => setColor(c)}
+                            className={`w-8 h-8 rounded-full border-2 ${color === c ? 'border-white' : 'border-transparent'}`}
+                            style={{ backgroundColor: c }}
+                          >
+                             {color === c && <View className="flex-1 items-center justify-center"><Check size={14} color={c === '#000000' ? 'white' : 'black'} /></View>}
+                          </TouchableOpacity>
+                      ))}
+                  </View>
+              )}
+          </View>
           
-          <View style={{height: 100}} /> 
+          <TouchableOpacity onPress={handleShare}>
+            <LinearGradient
+                colors={['#00E5FF', '#0047FF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                className="h-14 rounded-full flex-row items-center justify-center gap-2"
+            >
+                <Share2 color="white" size={20} />
+                <Text className="text-white font-bold text-lg">Save & Share</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          
         </ScrollView>
-      </LinearGradient>
+      </View>
     </TouchableWithoutFeedback>
   );
 };
+

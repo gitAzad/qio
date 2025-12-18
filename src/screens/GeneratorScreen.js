@@ -53,23 +53,44 @@ export const GeneratorScreen = () => {
       }
   };
 
-  const handleShare = () => {
-    if (qrRef) {
+  const handleShare = async () => {
+    if (!qrRef) {
+      console.log('QR ref not available');
+      return;
+    }
+
+    try {
       qrRef.toDataURL(async (data) => {
         try {
-            const base64Data = data.startsWith('data:') ? data.split(',')[1] : data;
-            const tempPath = FileSystem.cacheDirectory + 'qr-code.png';
-            
-            // Use the new File API for Expo SDK 54
-            const file = new FileSystem.File(tempPath);
-            await file.create();
-            await file.write(base64Data, { encoding: FileSystem.EncodingType.Base64 });
-            
-            await Sharing.shareAsync(tempPath);
+          const base64Data = data.startsWith('data:') ? data.split(',')[1] : data;
+          const filename = `qr-code-${Date.now()}.png`;
+          const tempPath = `${FileSystem.cacheDirectory}${filename}`;
+          
+          // Write the file using writeAsStringAsync (more reliable on Android)
+          await FileSystem.writeAsStringAsync(tempPath, base64Data, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          
+          // Verify file exists
+          const fileInfo = await FileSystem.getInfoAsync(tempPath);
+          if (!fileInfo.exists) {
+            throw new Error('File was not created');
+          }
+          
+          // Share the file
+          await Sharing.shareAsync(tempPath, {
+            mimeType: 'image/png',
+            dialogTitle: 'Share QR Code',
+            UTI: 'public.png'
+          });
         } catch (error) {
-            console.error("Error sharing QR code:", error);
+          console.error("Error sharing QR code:", error);
+          alert('Failed to share QR code. Please try again.');
         }
       });
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+      alert('Failed to generate QR code. Please try again.');
     }
   };
 

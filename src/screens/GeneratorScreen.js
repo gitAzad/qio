@@ -42,7 +42,12 @@ export const GeneratorScreen = () => {
     });
 
     if (!result.canceled) {
-      setLogo(result.assets[0].uri);
+      if (result.assets[0].base64) {
+        const type = result.assets[0].mimeType || 'image/jpeg';
+        setLogo(`data:${type};base64,${result.assets[0].base64}`);
+      } else {
+        setLogo(result.assets[0].uri);
+      }
     }
   };
 
@@ -62,6 +67,18 @@ export const GeneratorScreen = () => {
     try {
       qrRef.current.toDataURL(async (data) => {
         try {
+          // Web Implementation
+          if (Platform.OS === 'web') {
+            const link = document.createElement('a');
+            link.href = `data:image/png;base64,${data}`;
+            link.download = `qr-code-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+          }
+
+          // Native Implementation
           const base64Data = data.startsWith('data:') ? data.split(',')[1] : data;
           const filename = `qr-code-${Date.now()}.png`;
           const tempPath = `${FileSystem.cacheDirectory}${filename}`;
@@ -97,7 +114,8 @@ export const GeneratorScreen = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className="flex-1" style={{ backgroundColor: theme.colors.background }}>
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 120 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={{ width: '100%', maxWidth: 600, alignSelf: 'center', paddingHorizontal: 24, paddingTop: 60, paddingBottom: 120 }}>
           
           <Text className="text-xl font-[Inter_700Bold] text-center mb-6" style={{ color: theme.colors.text }}>Create QR Code</Text>
           
@@ -188,6 +206,7 @@ export const GeneratorScreen = () => {
             </LinearGradient>
           </TouchableOpacity>
           
+          </View>
         </ScrollView>
       </View>
     </TouchableWithoutFeedback>

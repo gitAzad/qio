@@ -4,14 +4,13 @@
   "main": "index.js",
   "author": "MD Azad <https://mdazad.com>",
   "description": "Fast & Powerful QR Code Scanner and Generator",
-  "homepage": "https://qio.mdazad.com",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "predeploy": "expo export -p web",
-    "deploy": "gh-pages -d dist"
+    "build": "expo export -p web",
+    "vercel-build": "expo export -p web"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -49,7 +48,6 @@
   "private": true,
   "devDependencies": {
     "babel-preset-expo": "^54.0.8",
-    "gh-pages": "^6.3.0",
     "sharp": "^0.34.5"
   }
 }

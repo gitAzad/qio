@@ -1,11 +1,15 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.mdazad.qio",
       "sha256_cert_fingerprints": [
-        "43:93:6F:0C:6E:9B:60:57:AB:2A:73:E4:A5:D7:4E:ED:6F:29:6C:5F:2D:45:47:DD:6F:2F:62:5C:6D:C8:07:CA:3"
+        "43:93:6F:0C:6E:9B:60:57:AB:2A:73:E4:A5:D7:4E:ED:6F:29:6C:5F:2D:45:47:DD:6F:2F:62:5C:6D:C8:07:CA:3",
+        "17:30:1C:FF:92:F9:3C:69:2F:9A:6B:D1:FD:26:2C:E5:A3:1B:EC:B7:30:6D:36:DA:8F:2B:13:5C:F6:DC:60:A1"
       ]
     }
   }
